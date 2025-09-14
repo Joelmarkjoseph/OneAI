@@ -1,7 +1,21 @@
 import { Button } from "@/components/ui/button";
 import { Menu, Sparkles } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Header = () => {
+  const { user, signInWithGoogle, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignIn = async () => {
+    await signInWithGoogle();
+    navigate("/dashboard", { replace: true });
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/", { replace: true });
+  };
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-glass-border backdrop-blur-md">
       <div className="container mx-auto px-6 py-4">
@@ -24,12 +38,25 @@ const Header = () => {
           
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-4">
-            <Button variant="ghost" size="sm">
-              Sign In
-            </Button>
-            <Button variant="neon" size="sm" asChild>
-              <a href="/dashboard">Dashboard</a>
-            </Button>
+            {!user ? (
+              <>
+                <Button variant="ghost" size="sm" onClick={handleSignIn}>
+                  Sign In
+                </Button>
+                <Button variant="neon" size="sm" asChild>
+                  <a href="/login">Get Started</a>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="neon" size="sm" asChild>
+                  <a href="/dashboard">Dashboard</a>
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleLogout}>
+                  Sign Out
+                </Button>
+              </>
+            )}
           </div>
           
           {/* Mobile Menu Button */}
