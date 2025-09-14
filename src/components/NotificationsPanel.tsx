@@ -2,64 +2,22 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bot, MessageCircle, CheckCircle, Clock, Star } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useEffect, useState } from "react";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
-const notificationsData = [
-  {
-    id: 1,
-    type: "professor",
-    title: "New AI Professor Feedback",
-    message: "Excellent work on your Neural Networks assignment! You've shown great understanding of backpropagation concepts.",
-    time: "5 minutes ago",
-    priority: "high",
-    read: false,
-    course: "Advanced Machine Learning",
-    professor: "Prof. Sarah Chen"
-  },
-  {
-    id: 2,
-    type: "system",
-    title: "Weekly Progress Report",
-    message: "You've completed 8.5 hours of learning this week. Keep up the great momentum!",
-    time: "2 hours ago",
-    priority: "medium",
-    read: false,
-    course: null,
-    professor: null
-  },
-  {
-    id: 3,
-    type: "professor",
-    title: "Course Update Available",
-    message: "New quantum computing simulation labs have been added to your course. Check them out!",
-    time: "1 day ago",
-    priority: "medium",
-    read: true,
-    course: "Quantum Computing Fundamentals",
-    professor: "Prof. Maria Tesla"
-  },
-  {
-    id: 4,
-    type: "achievement",
-    title: "Achievement Unlocked!",
-    message: "Congratulations! You've earned the 'Data Structures Master' badge for completing all tree algorithms.",
-    time: "2 days ago",
-    priority: "high",
-    read: true,
-    course: "Data Structures & Algorithms",
-    professor: null
-  },
-  {
-    id: 5,
-    type: "professor",
-    title: "Personalized Study Plan",
-    message: "Based on your learning patterns, I've created a custom study plan to help you excel in algorithms.",
-    time: "3 days ago",
-    priority: "medium",
-    read: true,
-    course: "Data Structures & Algorithms",
-    professor: "Dr. Alex Rodriguez"
-  }
-];
+type NotificationItem = {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  time: string;
+  priority: "high" | "medium" | "low";
+  read: boolean;
+  course?: string | null;
+  professor?: string | null;
+};
 
 const getNotificationIcon = (type: string) => {
   switch (type) {
@@ -86,7 +44,21 @@ const getPriorityColor = (priority: string) => {
 };
 
 const NotificationsPanel = () => {
-  const unreadCount = notificationsData.filter(n => !n.read).length;
+  const { user } = useAuth();
+  const [items, setItems] = useState<NotificationItem[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      if (!user) return;
+      const ref = collection(db, "users", user.uid, "notifications");
+      const q = query(ref, orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(q);
+      setItems(snapshot.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as NotificationItem[]);
+    };
+    load();
+  }, [user]);
+
+  const unreadCount = items.filter(n => !n.read).length;
 
   return (
     <div className="space-y-6">
@@ -122,7 +94,7 @@ const NotificationsPanel = () => {
       
       {/* Notifications List */}
       <div className="space-y-3">
-        {notificationsData.map((notification) => (
+        {items.map((notification) => (
           <Card 
             key={notification.id} 
             className={`glass-card p-4 transition-all duration-200 hover:scale-[1.01] border-0 ${

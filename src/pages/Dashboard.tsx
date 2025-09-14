@@ -6,9 +6,41 @@ import { DashboardSidebar } from "@/components/DashboardSidebar";
 import CoursesGrid from "@/components/CoursesGrid";
 import ProgressTracker from "@/components/ProgressTracker";
 import NotificationsPanel from "@/components/NotificationsPanel";
-import { Search, Bell, User, ChevronDown } from "lucide-react";
+import { Search, Bell, ChevronDown } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useEffect, useMemo, useState } from "react";
+import { collection, doc, getDocs, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const Dashboard = () => {
+  const { user, logout } = useAuth();
+  const [activeCourses, setActiveCourses] = useState(0);
+  const [avgProgress, setAvgProgress] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [totalHours, setTotalHours] = useState(0);
+
+  useEffect(() => {
+    const load = async () => {
+      if (!user) return;
+      const coursesRef = collection(db, "users", user.uid, "courses");
+      const coursesSnap = await getDocs(coursesRef);
+      const courseDocs = coursesSnap.docs.map((d) => d.data() as any);
+      setActiveCourses(courseDocs.length);
+      if (courseDocs.length > 0) {
+        const sum = courseDocs.reduce((acc, c) => acc + (c.progress ?? 0), 0);
+        setAvgProgress(Math.round(sum / courseDocs.length));
+      } else {
+        setAvgProgress(0);
+      }
+
+      const progressRef = doc(db, "users", user.uid, "meta", "progress");
+      const progressSnap = await getDoc(progressRef);
+      const data = (progressSnap.data() as any) || {};
+      setStreak(data.streak ?? 0);
+      setTotalHours(data.totalHours ?? 0);
+    };
+    load();
+  }, [user]);
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
@@ -36,12 +68,14 @@ const Dashboard = () => {
                 </Button>
                 
                 <div className="flex items-center gap-2 cursor-pointer">
-                  <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-white" />
-                  </div>
+                  {user?.photoURL ? (
+                    <img src={user.photoURL} alt={user.displayName || "User"} className="w-8 h-8 rounded-full" />
+                  ) : (
+                    <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-full" />
+                  )}
                   <div className="hidden sm:block">
-                    <p className="text-sm font-medium text-foreground">Alex Chen</p>
-                    <p className="text-xs text-muted-foreground">Computer Science</p>
+                    <p className="text-sm font-medium text-foreground">{user?.displayName || user?.email}</p>
+                    <p className="text-xs text-muted-foreground">{user?.email}</p>
                   </div>
                   <ChevronDown className="w-4 h-4 text-muted-foreground" />
                 </div>
@@ -54,7 +88,7 @@ const Dashboard = () => {
             {/* Welcome Section */}
             <div className="space-y-2">
               <h1 className="text-3xl font-bold text-foreground">
-                Welcome back, <span className="gradient-text">Alex</span>! 👋
+                Welcome back, <span className="gradient-text">{user?.displayName?.split(" ")[0] || "Learner"}</span>! 👋
               </h1>
               <p className="text-muted-foreground">
                 Continue your learning journey with AI-powered personalized education.
@@ -66,10 +100,10 @@ const Dashboard = () => {
               <Card className="glass-card p-6 border-0">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary-light rounded-xl flex items-center justify-center">
-                    <span className="text-white font-bold">4</span>
+                    <span className="text-white font-bold">{activeCourses}</span>
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-foreground">4</p>
+                    <p className="text-2xl font-bold text-foreground">{activeCourses}</p>
                     <p className="text-sm text-muted-foreground">Active Courses</p>
                   </div>
                 </div>
@@ -78,10 +112,10 @@ const Dashboard = () => {
               <Card className="glass-card p-6 border-0">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-gradient-to-br from-secondary to-secondary-dark rounded-xl flex items-center justify-center">
-                    <span className="text-white font-bold">68%</span>
+                    <span className="text-white font-bold">{avgProgress}%</span>
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-foreground">68%</p>
+                    <p className="text-2xl font-bold text-foreground">{avgProgress}%</p>
                     <p className="text-sm text-muted-foreground">Avg Progress</p>
                   </div>
                 </div>
@@ -90,10 +124,10 @@ const Dashboard = () => {
               <Card className="glass-card p-6 border-0">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-gradient-to-br from-neon-green to-primary rounded-xl flex items-center justify-center">
-                    <span className="text-white font-bold">12</span>
+                    <span className="text-white font-bold">{streak}</span>
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-foreground">12</p>
+                    <p className="text-2xl font-bold text-foreground">{streak}</p>
                     <p className="text-sm text-muted-foreground">Day Streak</p>
                   </div>
                 </div>
@@ -102,10 +136,10 @@ const Dashboard = () => {
               <Card className="glass-card p-6 border-0">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-gradient-to-br from-neon-pink to-secondary rounded-xl flex items-center justify-center">
-                    <span className="text-white font-bold">147h</span>
+                    <span className="text-white font-bold">{totalHours}h</span>
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-foreground">147h</p>
+                    <p className="text-2xl font-bold text-foreground">{totalHours}h</p>
                     <p className="text-sm text-muted-foreground">Total Hours</p>
                   </div>
                 </div>
