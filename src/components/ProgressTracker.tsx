@@ -19,13 +19,13 @@ type ProgressDoc = {
 };
 
 const ProgressTracker = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [progressData, setProgressData] = useState<ProgressDoc>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
-      if (!user) return;
+      if (authLoading || !user) return;
       setLoading(true);
       const docRef = doc(db, "users", user.uid, "meta", "progress");
       const snap = await getDoc(docRef);
@@ -33,9 +33,13 @@ const ProgressTracker = () => {
       setLoading(false);
     };
     load();
-  }, [user]);
+  }, [user, authLoading]);
 
   const skills = progressData.skills || [];
+  const weeklyGoal = progressData.weeklyGoal ?? 0;
+  const weeklyTargetHours = (progressData as any).weeklyTargetHours ?? 0;
+  const weeklyCompletedHours = (progressData as any).weeklyCompletedHours ?? 0;
+  const weeklyRemainingHours = weeklyTargetHours > 0 ? Math.max(weeklyTargetHours - weeklyCompletedHours, 0) : 0;
 
   return (
     <div className="space-y-6">
@@ -84,8 +88,8 @@ const ProgressTracker = () => {
         </div>
         <Progress value={progressData.weeklyGoal} className="h-3 mb-2" />
         <div className="flex justify-between text-sm text-muted-foreground">
-          <span>25.5 hours completed</span>
-          <span>4.5 hours remaining</span>
+          <span>{weeklyCompletedHours} hours completed</span>
+          <span>{weeklyRemainingHours} hours remaining</span>
         </div>
       </Card>
       

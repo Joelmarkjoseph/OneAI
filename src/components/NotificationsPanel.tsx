@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bot, MessageCircle, CheckCircle, Clock, Star } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -44,21 +44,23 @@ const getPriorityColor = (priority: string) => {
 };
 
 const NotificationsPanel = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [items, setItems] = useState<NotificationItem[]>([]);
 
   useEffect(() => {
     const load = async () => {
-      if (!user) return;
+      if (authLoading || !user) return;
       const ref = collection(db, "users", user.uid, "notifications");
       const q = query(ref, orderBy("createdAt", "desc"));
       const snapshot = await getDocs(q);
       setItems(snapshot.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as NotificationItem[]);
     };
     load();
-  }, [user]);
+  }, [user, authLoading]);
 
   const unreadCount = items.filter(n => !n.read).length;
+  const professorCount = useMemo(() => items.filter(n => n.type === "professor").length, [items]);
+  const achievementCount = useMemo(() => items.filter(n => n.type === "achievement").length, [items]);
 
   return (
     <div className="space-y-6">
@@ -83,11 +85,11 @@ const NotificationsPanel = () => {
           <div className="text-xs text-muted-foreground">Unread</div>
         </Card>
         <Card className="glass-card p-4 text-center border-0">
-          <div className="text-lg font-bold text-neon-green">3</div>
+          <div className="text-lg font-bold text-neon-green">{professorCount}</div>
           <div className="text-xs text-muted-foreground">From AI Prof</div>
         </Card>
         <Card className="glass-card p-4 text-center border-0">
-          <div className="text-lg font-bold text-secondary">1</div>
+          <div className="text-lg font-bold text-secondary">{achievementCount}</div>
           <div className="text-xs text-muted-foreground">Achievements</div>
         </Card>
       </div>

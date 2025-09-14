@@ -25,13 +25,13 @@ type Course = {
 };
 
 const CoursesGrid = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadCourses = async () => {
-      if (!user) return;
+      if (authLoading || !user) return;
       setLoading(true);
       // expected structure: users/{uid}/courses collection with course docs
       const coursesRef = collection(db, "users", user.uid, "courses");
@@ -41,7 +41,7 @@ const CoursesGrid = () => {
       setLoading(false);
     };
     loadCourses();
-  }, [user]);
+  }, [user, authLoading]);
 
   return (
     <div className="space-y-6">
