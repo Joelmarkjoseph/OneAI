@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { auth, googleProvider } from "@/lib/firebase";
+import { auth, googleProvider, db } from "@/lib/firebase";
 import {
   onAuthStateChanged,
   signInWithPopup,
@@ -8,6 +8,7 @@ import {
   browserLocalPersistence,
   User,
 } from "firebase/auth";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 
 type AuthContextValue = {
   user: User | null;
@@ -23,8 +24,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
+      if (firebaseUser) {
+        const userRef = doc(db, "users", firebaseUser.uid);
+        await setDoc(
+          userRef,
+          {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email ?? null,
+            displayName: firebaseUser.displayName ?? null,
+            photoURL: firebaseUser.photoURL ?? null,
+            providerId: firebaseUser.providerData[0]?.providerId ?? null,
+            lastLoginAt: serverTimestamp(),
+            createdAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
       setLoading(false);
     });
     return () => unsubscribe();
@@ -32,7 +49,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signInWithGoogle = async () => {
     await setPersistence(auth, browserLocalPersistence);
-    await signInWithPopup(auth, googleProvider);
+    const cred = await signInWithPopup(auth, googleProvider);
+    const firebaseUser = cred.user;
+    const userRef = doc(db, "users", firebaseUser.uid);
+    await setDoc(
+      userRef,
+      {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email ?? null,
+        displayName: firebaseUser.displayName ?? null,
+        photoURL: firebaseUser.photoURL ?? null,
+        providerId: firebaseUser.providerData[0]?.providerId ?? null,
+        lastLoginAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
   };
 
   const logout = async () => {
