@@ -46,6 +46,36 @@
 
   <body>
     <div id="root"></div>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-analytics.js";
+      import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+      import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyAbKRbidsFtYgj6dyiAdKlW2nKvcsFrel8",
+        authDomain: "one3d-2e1e7.firebaseapp.com",
+        projectId: "one3d-2e1e7",
+        storageBucket: "one3d-2e1e7.firebasestorage.app",
+        messagingSenderId: "819638284944",
+        appId: "1:819638284944:web:5e511260bb68c77b971e15",
+        measurementId: "G-WZ07E986FC"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      try { getAnalytics(app); } catch (_) {}
+
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+      const googleProvider = new GoogleAuthProvider();
+
+      window.firebaseApp = app;
+      window.firebaseAuth = auth;
+      window.firebaseDb = db;
+      window.firebaseGoogleProvider = googleProvider;
+      window.firebaseAuthFns = { onAuthStateChanged, signInWithPopup, signOut, setPersistence, browserLocalPersistence };
+      window.firebaseFsFns = { doc, setDoc, serverTimestamp };
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

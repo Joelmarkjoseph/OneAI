@@ -1,22 +1,13 @@
-import { getApp, getApps, initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
-};
-
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
-const db = getFirestore(app);
+// Use Firebase instances initialized via CDN script in index.html
+// Types are relaxed to avoid tight coupling with SDK types when loaded via CDN.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const app = (window as any).firebaseApp;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const auth = (window as any).firebaseAuth;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = (window as any).firebaseDb;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const googleProvider = (window as any).firebaseGoogleProvider;
 
 export { app, auth, googleProvider, db };
 

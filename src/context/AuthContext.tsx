@@ -1,14 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { auth, googleProvider, db } from "@/lib/firebase";
-import {
-  onAuthStateChanged,
-  signInWithPopup,
-  signOut,
-  setPersistence,
-  browserLocalPersistence,
-  User,
-} from "firebase/auth";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+// Firebase auth/firestore functions are provided by the CDN script via window
+type User = import("firebase/auth").User;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const { onAuthStateChanged, signInWithPopup, signOut, setPersistence, browserLocalPersistence } = (window as any).firebaseAuthFns || {};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const { doc, serverTimestamp, setDoc } = (window as any).firebaseFsFns || {};
 
 type AuthContextValue = {
   user: User | null;
