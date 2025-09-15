@@ -49,9 +49,6 @@ const Header = () => {
               </>
             ) : (
               <>
-                <Button variant="neon" size="sm" asChild>
-                  <a href="/dashboard">Dashboard</a>
-                </Button>
                 <Button variant="ghost" size="sm" onClick={handleLogout}>
                   Sign Out
                 </Button>
